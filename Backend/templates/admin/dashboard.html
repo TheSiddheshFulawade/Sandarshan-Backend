@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RebitAdmin - Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <h1>Welcome to Dashboard</h1>
+            <p>Logged in as: {{ user.username }}</p>
+        </header>
+        
+        <nav>
+            <ul>
+                <li><a href="#">Profile</a></li>
+                <li><a href="#">Settings</a></li>
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <section>
+                <h2>Dashboard Overview</h2>
+                <p>This is your personalized dashboard. More features coming soon!</p>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

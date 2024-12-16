@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Guest Registration</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Guest Registration</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>Address:</label>
+                <textarea name="address" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label>Phone:</label>
+                <input type="tel" name="phone" required>
+            </div>
+            <div class="form-group">
+                <label>Reason for Visit:</label>
+                <textarea name="reason_for_visit" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Access Expiry:</label>
+                <input type="date" name="access_expiry" required>
+            </div>
+            <div class="form-group">
+                <label>Office Location:</label>
+                <input type="text" name="office_location" required>
+            </div>
+            <div class="form-group">
+                <label>Room Access:</label>
+                <textarea name="room_access" required></textarea>
+            </div>
+            <button type="submit">Register</button>
+        </form>
+    </div>
+</body>
+</html>

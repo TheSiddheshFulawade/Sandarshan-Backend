@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Guest QR Code</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Guest Registration Successful</h2>
+        <div class="qr-details">
+            <h3>{{ guest.name }}</h3>
+            <img src="{{ qr_code }}" alt="QR Code">
+            <p>Access Expires: {{ guest.access_expiry }}</p>
+            <p>Office Location: {{ guest.office_location }}</p>
+        </div>
+    </div>
+</body>
+</html>

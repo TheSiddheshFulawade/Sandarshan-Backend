@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RebitAdmin - User Registration</title>
+    <link rel="stylesheet" href="/static/css/registration.css">
+</head>
+<body>
+    <div class="registration-container">
+        <form method="post" action="{% url 'rebit_admin_register' %}">
+            {% csrf_token %}
+            <h2>User Registration</h2>
+            
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter your username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone_number">Phone Number (Optional)</label>
+                <input type="tel" id="phone_number" name="phone_number" placeholder="Enter your phone number">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a strong password" required>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat your password" required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-register">Register</button>
+            </div>
+
+            <div class="form-footer">
+                <p>Already have an account? <a href="{% url 'rebit_login' %}">Login here</a></p>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
