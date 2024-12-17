@@ -14,10 +14,7 @@ class WebcamObjectDetector:
         # Specific classes you want to detect
         self.DESIRED_CLASSES = desired_classes
         self.CLASS_NAMES = {
-            43: 'knife',
-            63: 'laptop', 
-            67: 'cell phone', 
-            76: 'scissors'
+            43: 'knife'
         }
         
         # Load the model
@@ -147,7 +144,7 @@ def main():
     MODEL_PATH = r"D:\ReBIT Hackathon\Yolov11\yolo11x.pt"
     
     # Classes to detect (43: knife, 63: laptop, 67: cell phone, 76: scissors)
-    DESIRED_CLASSES = [43, 63, 67, 76]
+    DESIRED_CLASSES = [43]
     
     # Create and run detector
     detector = WebcamObjectDetector(MODEL_PATH, DESIRED_CLASSES)

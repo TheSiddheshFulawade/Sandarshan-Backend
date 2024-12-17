@@ -189,88 +189,180 @@ function startCountdownAndDetection() {
     }, 500); // Process every 500ms
 }
 
-    function captureAndProcessFace() {
-        // Check if time has expired
-
-        if (typeof timeLeft === 'undefined' || timeLeft <= 0) {
-            stopFaceRecognition(false);
-            return;
-        }
-    
-        // Clear previous canvas drawings
-        detectionContext.clearRect(0, 0, detectionContext.canvas.width, detectionContext.canvas.height);
-    
-        // Capture current frame
-        const canvas = document.createElement('canvas');
-        canvas.width = faceVideoElement.videoWidth;
-        canvas.height = faceVideoElement.videoHeight;
-        const context = canvas.getContext('2d');
-        context.drawImage(faceVideoElement, 0, 0);
-    
-        const imageDataUrl = canvas.toDataURL('image/png');
-        
-        // Send for processing
-        fetch('/process_detection/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken.value,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `image=${encodeURIComponent(imageDataUrl)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Only process and draw if time is still remaining
-            if (timeLeft > 0) {
-                if (data.success && (data.faces.length > 0 || data.objects.length > 0)) {
-                    // Stop detection if faces or objects found
-                    stopFaceRecognition(true, data);
-                }
-    
-                // Draw bounding boxes for faces
-                data.faces.forEach(face => {
-                    const [x1, y1, x2, y2] = face.bbox;
-                    detectionContext.beginPath();
-                    detectionContext.rect(x1, y1, x2 - x1, y2 - y1);
-                    detectionContext.lineWidth = 2;
-                    detectionContext.strokeStyle = 'green';
-                    detectionContext.stroke();
-    
-                    // Add name label
-                    detectionContext.font = '14px Arial';
-                    detectionContext.fillStyle = 'green';
-                    detectionContext.fillText(
-                        face.name || 'Unknown', 
-                        x1, 
-                        y1 > 20 ? y1 - 10 : y1 + 20
-                    );
-                });
-    
-                // Draw bounding boxes for objects
-                data.objects.forEach(obj => {
-                    const [x1, y1, x2, y2] = obj.bbox;
-                    detectionContext.beginPath();
-                    detectionContext.rect(x1, y1, x2 - x1, y2 - y1);
-                    detectionContext.lineWidth = 2;
-                    detectionContext.strokeStyle = 'red';
-                    detectionContext.stroke();
-    
-                    // Add object label
-                    detectionContext.font = '14px Arial';
-                    detectionContext.fillStyle = 'red';
-                    detectionContext.fillText(
-                        `${obj.class_name} (${(obj.confidence * 100).toFixed(2)}%)`, 
-                        x1, 
-                        y1 > 20 ? y1 - 10 : y1 + 20
-                    );
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Detection error:', error);
-        });
+function captureAndProcessFace() {
+    // Check if time has expired
+    if (typeof timeLeft === 'undefined' || timeLeft <= 0) {
+        stopFaceRecognition(false);
+        return;
     }
 
+    // Clear previous canvas drawings
+    detectionContext.clearRect(0, 0, detectionContext.canvas.width, detectionContext.canvas.height);
+
+    // Capture current frame
+    const canvas = document.createElement('canvas');
+    canvas.width = faceVideoElement.videoWidth;
+    canvas.height = faceVideoElement.videoHeight;
+    const context = canvas.getContext('2d');
+    context.drawImage(faceVideoElement, 0, 0);
+
+    const imageDataUrl = canvas.toDataURL('image/png');
+    
+    // Send for processing
+    fetch('/process_detection/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken.value,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `image=${encodeURIComponent(imageDataUrl)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Only process and draw if time is still remaining
+        if (timeLeft > 0) {
+            if (data.success && (data.faces.length > 0 || data.objects.length > 0)) {
+                // Stop detection if faces or objects found
+                stopFaceRecognition(true, data);
+            }
+
+            // Draw bounding boxes for faces
+            data.faces.forEach(face => {
+                const [x1, y1, x2, y2] = face.bbox;
+                detectionContext.beginPath();
+                detectionContext.rect(x1, y1, x2 - x1, y2 - y1);
+                detectionContext.lineWidth = 2;
+                detectionContext.strokeStyle = 'green';
+                detectionContext.stroke();
+
+                // Add name label
+                detectionContext.font = '14px Arial';
+                detectionContext.fillStyle = 'green';
+                detectionContext.fillText(
+                    face.name || 'Unknown', 
+                    x1, 
+                    y1 > 20 ? y1 - 10 : y1 + 20
+                );
+            });
+
+            // Draw bounding boxes for objects
+            data.objects.forEach(obj => {
+                const [x1, y1, x2, y2] = obj.bbox;
+                detectionContext.beginPath();
+                detectionContext.rect(x1, y1, x2 - x1, y2 - y1);
+                detectionContext.lineWidth = 2;
+                detectionContext.strokeStyle = 'red';
+                detectionContext.stroke();
+
+                // Add object label
+                detectionContext.font = '14px Arial';
+                detectionContext.fillStyle = 'red';
+                detectionContext.fillText(
+                    `${obj.class_name} (${(obj.confidence * 100).toFixed(2)}%)`, 
+                    x1, 
+                    y1 > 20 ? y1 - 10 : y1 + 20
+                );
+            });
+        } else {
+            // Clear the canvas if time has expired
+            detectionContext.clearRect(0, 0, detectionContext.canvas.width, detectionContext.canvas.height);
+        }
+    })
+    .catch(error => {
+        console.error('Detection error:', error);
+    });
+}
+
+async function triggerProxyAlert() {
+    try {
+        // Create an Audio object with the specific path
+        const audioPath = '/static/audio/Alert.mp3';
+        const alertSound = new Audio(audioPath);
+        
+        // Play the alert sound
+        await new Promise((resolve, reject) => {
+            alertSound.addEventListener('ended', resolve);
+            alertSound.addEventListener('error', reject);
+            alertSound.play().catch(reject);
+        });
+        
+        // After sound finishes, speak the alert
+        await new Promise((resolve) => {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance('Proxy Debard');
+                
+                // Optionally customize voice
+                utterance.rate = 1;
+                utterance.pitch = 1;
+                
+                const voices = window.speechSynthesis.getVoices();
+                const englishVoice = voices.find(voice => 
+                    voice.lang.includes('en-') && 
+                    (voice.name.includes('Google') || voice.name.includes('Microsoft'))
+                );
+                
+                if (englishVoice) {
+                    utterance.voice = englishVoice;
+                }
+                
+                utterance.onend = resolve;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                resolve();
+            }
+        });
+    } catch (error) {
+        console.error('Alert sequence error:', error);
+    }
+}
+
+function playAlertSound() {
+    try {
+        // Create an Audio object with the specific path
+        const audioPath = '/assets/audio/Alert.mp3';
+        const alertSound = new Audio(audioPath);
+        
+        // Play the audio
+        alertSound.play()
+            .then(() => {
+                console.log('Alert sound played successfully');
+            })
+            .catch((error) => {
+                console.error('Error playing alert sound:', error);
+            });
+    } catch (error) {
+        console.error('Failed to create audio object:', error);
+    }
+}
+
+function speakAlert(message) {
+    // Check if browser supports Web Speech API
+    if ('speechSynthesis' in window) {
+        // Create a new SpeechSynthesisUtterance object
+        const utterance = new SpeechSynthesisUtterance(message);
+        
+        // Optional: Customize voice properties
+        utterance.rate = 1; // Normal speech rate
+        utterance.pitch = 1;  // Normal pitch
+        
+        // Optionally, you can choose a specific voice
+        const voices = window.speechSynthesis.getVoices();
+        // Try to find an English voice
+        const englishVoice = voices.find(voice => 
+            voice.lang.includes('en-') && 
+            (voice.name.includes('Google') || voice.name.includes('Microsoft'))
+        );
+        
+        if (englishVoice) {
+            utterance.voice = englishVoice;
+        }
+        
+        // Speak the message
+        window.speechSynthesis.speak(utterance);
+    } else {
+        console.warn('Text-to-speech not supported');
+    }
+}
     // Stop Face Recognition
     function stopFaceRecognition(foundMatch, detectionData = null) {
         // Clear intervals
@@ -284,6 +376,10 @@ function startCountdownAndDetection() {
         if (faceStream) {
             faceStream.getTracks().forEach(track => track.stop());
             faceVideoElement.srcObject = null;
+        }
+
+        if (detectionContext) {
+            detectionContext.clearRect(0, 0, detectionContext.canvas.width, detectionContext.canvas.height);
         }
 
         // Process results if a match was found
@@ -318,6 +414,9 @@ function startCountdownAndDetection() {
                     alert('Person Verified Successfully!');
                 } else {
                     alert('ALERT: Person Verification Failed! Possible Proxy Attempt.');
+                    playAlertSound();
+                    speakAlert('Proxy Debard');
+                    triggerProxyAlert();
                 }
             }
         } else {

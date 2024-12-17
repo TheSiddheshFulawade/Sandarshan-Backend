@@ -6,9 +6,13 @@ from PIL import Image
 import os
 import winsound
 from ultralytics import YOLO
+from pydub import AudioSegment
+from pydub.playback import play
+import pyttsx3
 
 class IntegratedDetector:
-    def __init__(self, reference_dir, model_path, desired_classes):
+    def __init__(self, reference_dir, model_path, desired_classes, alert_audio_path):
+        self.engine = pyttsx3.init()
         # Device configuration
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
@@ -27,11 +31,18 @@ class IntegratedDetector:
         self.DESIRED_CLASSES = desired_classes
         self.CLASS_NAMES = {
             0: 'person',
-            43: 'knife',
-            63: 'laptop', 
-            67: 'cell phone', 
-            76: 'scissors'
+            43: 'knife'
         }
+        
+        # Tailgating Detection
+        self.default_people_count = 1
+        self.tailgating_triggered = False
+        
+        # Audio Alert
+        self.alert_audio = AudioSegment.from_mp3(alert_audio_path)
+        
+        # ID Scanning
+        self.id_scanned_count = 1
         
         # Load Reference Images
         self.load_reference_images(reference_dir)
@@ -62,6 +73,8 @@ class IntegratedDetector:
         
         # Detect faces
         boxes, _ = self.mtcnn.detect(rgb_frame)
+        
+        matched_names = []
         
         if boxes is not None:
             for box in boxes:
@@ -100,6 +113,7 @@ class IntegratedDetector:
                             if highest_similarity > self.threshold:
                                 cv2.putText(frame, best_match, (x1, y1 - 10), 
                                             cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                                matched_names.append(best_match)
                             else:
                                 cv2.putText(frame, "Unknown", (x1, y1 - 10), 
                                             cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
@@ -109,7 +123,7 @@ class IntegratedDetector:
                 except Exception as e:
                     print(f"Error processing face: {e}")
         
-        return frame
+        return frame, matched_names
     
     def detect_objects(self, frame):
         # Run YOLO inference
@@ -143,10 +157,19 @@ class IntegratedDetector:
                     cv2.putText(frame, f'Person {person_count}', 
                                 (int(x1), int(y1)-30), 
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                
+                    
+                if class_id == 43:
+                    cv2.putText(frame, f'Knife', 
+                                (int(x1), int(y1)-30), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2), cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), 
+                              (255, 5, 5), 2)
+                    self.engine.setProperty('rate', 130)  # Speed of speech (words per minute)
+                    self.engine.setProperty('volume', 1.0)  # Volume (0.0 to 1.0)
+                    self.engine.say("Dangerous Object in Premises")
+
                 # Draw bounding box
-                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), 
-                              (0, 255, 0), 2)
+                #cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), 
+                #              (255, 5, 5), 2)
                 
                 # Draw label for other objects
                 if class_id != 0:
@@ -161,19 +184,11 @@ class IntegratedDetector:
                     'bbox': [int(x1), int(y1), int(x2), int(y2)]
                 })
         
-        # Display total person count
-        cv2.putText(frame, f'Total Persons: {person_count}', 
-                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        
-        return frame, filtered_results
+        return frame, filtered_results, person_count
     
     def run(self):
-        camera_url = "rtsp://admin:PEUHQA@192.168.105.36:554/h264_stream"   
-
-        cap = cv2.VideoCapture(camera_url)
-
         # Open webcam
-        # cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(0)
         
         if not cap.isOpened():
             raise RuntimeError("Error: Could not open webcam")
@@ -190,10 +205,43 @@ class IntegratedDetector:
                 frame = cv2.flip(frame, 1)
                 
                 # Detect and recognize faces
-                frame = self.detect_faces(frame)
+                frame, matched_names = self.detect_faces(frame)
                 
                 # Detect objects and count persons
-                frame, detections = self.detect_objects(frame)
+
+                frame, detections, person_count = self.detect_objects(frame)
+                
+                # Tailgating Detection
+                #if person_count > self.default_people_count and not self.tailgating_triggered:
+                if person_count > self.default_people_count:
+                    self.tailgating_triggered = True
+                    print("Tailgating Detected!")
+                    print('In the try loop')
+                    try:
+                        self.engine.setProperty('rate', 130)  # Speed of speech (words per minute)
+                        self.engine.setProperty('volume', 1.0)  # Volume (0.0 to 1.0)
+                        self.engine.say(" tailgating is not allowed")
+                        self.engine.say(" tailgating is not allowed")
+                        self.engine.runAndWait()
+                        print('In the try loop')
+                        #winsound.Beep(frequency=1500, duration=1000)
+                        # Convert text to speech
+                       
+                        self.engine.say(" tailgating is not allowed")
+                        self.engine.runAndWait()
+
+                       # play(self.alert_audio)
+                        
+                        #winsound.Beep(frequency=340, duration=1000)
+
+                    except Exception as e:
+                        print(f"Audio playback error: {e}")
+                
+                # Add ID Scanned and Person Count text
+                cv2.putText(frame, f'Id Scanned: {self.id_scanned_count}', 
+                            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                cv2.putText(frame, f'People Count: {person_count}', 
+                            (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
                 
                 # Display frame
                 cv2.imshow('Integrated Detection', frame)
@@ -215,14 +263,15 @@ class IntegratedDetector:
 
 def main():
     # Paths and configurations
-    REFERENCE_DIR = "employee_database"
+    REFERENCE_DIR = r"D:\ReBIT Hackathon\Yolov11\employee_database"
     MODEL_PATH = r"D:\ReBIT Hackathon\Yolov11\yolo11x.pt"
+    ALERT_AUDIO_PATH = r"D:\ReBIT Hackathon\Yolov11\Backend\assets\audio\Alert.mp3"
     
     # Classes to detect (including person)
-    DESIRED_CLASSES = [0, 43, 63, 67, 76]
+    DESIRED_CLASSES = [0, 43]
     
     # Create and run integrated detector
-    detector = IntegratedDetector(REFERENCE_DIR, MODEL_PATH, DESIRED_CLASSES)
+    detector = IntegratedDetector(REFERENCE_DIR, MODEL_PATH, DESIRED_CLASSES, ALERT_AUDIO_PATH)
     detector.run()
 
 if __name__ == "__main__":
