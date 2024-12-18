@@ -28,13 +28,10 @@ class IntegratedDetectionService:
         self.face_model = InceptionResnetV1(pretrained='vggface2').eval().to(self.device)
         
         # Object Detection Setup
-        self.DESIRED_CLASSES = [0, 43, 63, 67, 76]  # Added 'person'
+        self.DESIRED_CLASSES = [0, 43]  # Added 'person'
         self.CLASS_NAMES = {
             0: 'person',
-            43: 'knife',
-            63: 'laptop', 
-            67: 'cell phone', 
-            76: 'scissors'
+            43: 'knife'
         }
         self.object_model = YOLO(model_path).to(self.device)
         

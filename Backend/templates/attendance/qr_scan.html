@@ -4,43 +4,67 @@
     <meta charset="UTF-8">
     <title>Attendance Verification</title>
     <link rel="stylesheet" href="/static/css/qr_scan.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <div class="card qr-scanner-card">
-            <h2>QR Code Scanner</h2>
-            
-            {% csrf_token %}
-            
-            <div class="camera-section">
-                <video id="videoElement" autoplay playsinline></video>
-                <canvas id="captureCanvas" style="display:none;"></canvas>
-            </div>
-            
-            <div class="controls">
-                <button id="startCamera">Start Camera</button>
-                <button id="captureImage" disabled>Capture QR</button>
-            </div>
-            
-            <div id="qrResultSection" class="result-section">
-                <h3>QR Scan Result:</h3>
-                <div id="qrResultContent"></div>
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message"></div>
+
+        <!-- Popup Containers -->
+        <div id="successPopup" class="popup">
+            <div class="popup-content success">
+                <i class="fas fa-check-circle"></i>
+                <p id="successMessage">Verified Successfully!</p>
             </div>
         </div>
 
-        <div class="card face-recognition-card" id="faceRecognitionCard" style="display:none;">
-            <h2>Face Recognition</h2>
-
-            <div id="countdownDisplay" style="display:none; color: red; font-weight: bold;"></div>
-            
-            <div class="camera-section">
-                <video id="faceVideoElement" autoplay playsinline></video>
-                <canvas id="faceCaptureCanvas" style="display:none;"></canvas>
+        <div id="alertPopup" class="popup">
+            <div class="popup-content alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p id="alertMessage">Proxy Attempt Detected!</p>
             </div>
-            
-            <div id="faceResultSection" class="result-section">
-                <h3>Face Recognition Result:</h3>
-                <div id="faceResultContent"></div>
+        </div>
+
+        <!-- Main Verification Sections -->
+        <div class="verification-section" id="qrSection">
+            <div class="card qr-scanner-card" id="qrRecognitionCard">
+                <h2 id="qrTitle">QR Code Scanner</h2>
+                
+                {% csrf_token %}
+                
+                <div class="camera-section">
+                    <video id="videoElement" autoplay playsinline></video>
+                    <canvas id="captureCanvas" style="display:none;"></canvas>
+                </div>
+                
+                <div class="controls">
+                    <button id="startCamera">Start Camera</button>
+                    <button id="captureImage" disabled>Capture QR</button>
+                </div>
+                
+                <div id="qrResultSection" class="result-section">
+                    <h3>QR Scan Result:</h3>
+                    <div id="qrResultContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="verification-section" id="faceSection" style="display:none;">
+            <div class="card face-recognition-card" id="faceRecognitionCard">
+                <h2>Face Recognition</h2>
+
+                <div id="countdownDisplay" style="display:none; color: red; font-weight: bold;"></div>
+                
+                <div class="camera-section">
+                    <video id="faceVideoElement" autoplay playsinline></video>
+                    <canvas id="faceCaptureCanvas" style="display:none;"></canvas>
+                </div>
+                
+                <div id="faceResultSection" class="result-section">
+                    <h3>Face Recognition Result:</h3>
+                    <div id="faceResultContent"></div>
+                </div>
             </div>
         </div>
     </div>

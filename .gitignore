@@ -133,7 +133,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-yolov11/
 
 # Spyder project settings
 .spyderproject
